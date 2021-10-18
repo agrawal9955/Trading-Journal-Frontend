@@ -1,0 +1,31 @@
+<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+  <a class="navbar-brand" routerLink="/cover">Trading Journal</a>
+  <div class="ml-auto mb-2 mb-md-0">
+    <ul class="navbar-nav ml-auto mb-2 mb-md-0">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/login">Login</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+ <form class="form-signin" #loginForm="ngForm" (ngSubmit)="login(loginForm)">
+  <div class="container p-4">
+  <img
+    src="https://getbootstrap.com/docs/4.0/assets/brand/bootstrap-solid.svg"
+    alt="" width="72" height="72">
+  </div>
+  <input type="email" ngModel name="email" class="form-control"
+    placeholder="Email" required autofocus>
+  <input type="password" ngModel name="password" id="inputPassword"
+    class="form-control"
+    placeholder="Password" required>
+  <button class="btn btn-lg btn-primary btn-block" type="submit" [disabled]="loginForm.invalid">Sign in</button>
+
+  <h1></h1>
+  <p>Not a memeber yet? <a class="" routerLink="/register">Sign up for free</a></p>
+  <h1></h1>
+  <p>Don't Remember Password? <a class="" routerLink="/register">Reset Password</a></p>
+
+</form>

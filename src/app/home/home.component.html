@@ -1,0 +1,250 @@
+<div class="wrapper">
+  <app-navigation></app-navigation>
+  <div class="main_content">
+    <!-- Top Nav Bar -->
+    <div class="header">
+      <div
+        class="btn-toolbar justify-content-end"
+        role="toolbar"
+        aria-label="Toolbar with button groups">
+        <div class="input-group mb-3 me-3" role="group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search"
+            aria-label="Search"
+            aria-describedby="basic-addon2"
+            />
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button">
+              <span class="material-icons"> search </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="btn-group mb-3 me-3" role="group">
+          <button class="btn btn-outline-secondary" type="button"
+            (click)="logout()">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Body -->
+    <ng-container *ngIf="(appState$ | async) as appState"
+      [ngSwitch]="appState.dataState">
+      <div class="header">
+        <p (click)="enableAnalyticsView()" *ngIf="!isAnalyticsViewEnabled()"> Analytics View</p>
+        <p (click)="disableAnalyticsView()" *ngIf="isAnalyticsViewEnabled()"> Journal View </p>
+      </div>
+
+      <!-- Trade Journal View -->
+      <div *ngIf="!isAnalyticsViewEnabled()">
+        <ng-container *ngSwitchCase="DataState.LOADED">
+          <div class="fab-container">
+            <button class="bg-" data-bs-toggle="modal"
+              data-bs-target="#staticBackdrop" mat-fab color="warn"
+              aria-label="Example icon button with a delete icon">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Serial</th>
+                <th scope="col">Stock Name</th>
+                <th scope="col">Trade Type</th>
+                <th scope="col">Entry</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Planned Exit</th>
+                <th scope="col">P and L</th>
+                <th scope="col">Rating</th>
+              </tr>
+            </thead>
+            <tbody *ngFor="let journal of appState.appData?.data?.tradeJournals;
+              let i= index">
+              <!-- <tbody> -->
+              <tr [ngClass]="{
+                'closed': isJournalClosed(journal),
+                'open': !isJournalClosed(journal)
+                }">
+                <th scope="row">{{i + 1}}</th>
+                <td>{{journal.stock}}</td>
+                <td>{{journal.tradeType}}</td>
+                <td>{{journal.entry}}</td>
+                <td>{{journal.volume}}</td>
+                <td>{{journal.plannedExit}}</td>
+                <td *ngIf="isJournalClosed(journal)">{{(getJournalPnL(journal).toFixed(2))}}</td>
+                <td *ngIf="!isJournalClosed(journal)">Not Yet Closed</td>
+                <td>{{journal.rating}}</td>
+                <td><div class="dropdown">
+                    <button class="btn btn-secondary" type="button"
+                      id="dropdownMenuButton1" data-bs-toggle="dropdown"
+                      aria-expanded="false">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <ul class="dropdown-menu"
+                      aria-labelledby="dropdownMenuButton1">
+                      <li><a class="dropdown-item">Select</a></li>
+                      <li><a class="dropdown-item">Edit action</a></li>
+                      <li><a class="dropdown-item"
+                          (click)="deleteJournal(journal)">Delete </a></li>
+                    </ul>
+                  </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </div>
+
+      <!-- Trade Journal Analytics View -->
+      <div *ngIf="isAnalyticsViewEnabled()" class="bg-light">
+        analytics working
+      </div>
+
+      <ng-container *ngSwitchCase="DataState.LOADING">
+        LOADING
+      </ng-container>
+      <ng-container *ngSwitchCase="DataState.ERROR">
+        {{appState.error}}
+      </ng-container>
+    </ng-container>
+  </div>
+</div>
+
+
+<!-- Add Journal Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static"
+  data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <form #addJournalForm="ngForm" (ngSubmit)="addJournal(addJournalForm)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="staticBackdropLabel">Add Journal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <!-- Stock Name -->
+            <div class="col mb-3">
+              <label for="stockName" class="form-label text-start">Stock Name</label>
+              <input type="text" ngModel name="stock" class="form-control"
+                id="stockName" placeholder="Stock Name" required>
+            </div>
+            <!-- Trade Type -->
+            <div class="col mb-3">
+              <label for="tradeType" class="form-label text-start">Trade Type</label>
+              <select class="form-select form-select-sm" ngModel
+                name="tradeType" id="tradeType" aria-label=".form-select-sm
+                example" required>
+                <option selected value="LONG">Long</option>
+                <option value="SHORT">Short</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <!-- Entry Price -->
+            <div class="col mb-3">
+              <label for="entry" class="form-label text-start">Entry Price</label>
+              <input type="number" ngModel name="entry" step="0.001"
+                class="form-control" id="entry" placeholder="Entry Price"
+                required>
+            </div>
+            <!-- Stock Volume -->
+            <div class="col mb-3">
+              <label for="volume" class="form-label text-start">Quantity</label>
+              <input type="number" ngModel name="volume" class="form-control"
+                id="volume" placeholder="Quantity" required>
+            </div>
+            <!-- Stop Loss -->
+            <div class="col mb-3">
+              <label for="stoploss" class="form-label text-start">Stop Loss</label>
+              <input type="number" ngModel name="stoploss" step="0.001"
+                class="form-control" id="stoploss" placeholder="Stop Loss"
+                required>
+            </div>
+            <!-- Planned Exit -->
+            <div class="col mb-3">
+              <label for="plannedExit" class="form-label text-start">Planned
+                Exit</label>
+              <input type="number" ngModel name="plannedExit" step="0.001"
+                class="form-control" id="plannedExit" placeholder="Planned Exit"
+                required>
+            </div>
+          </div>
+          <!-- Image Url -->
+          <div class="mb-3">
+            <label for="image" class="form-label text-start">Image</label>
+            <input type="text" ngModel name="imageUrl" class="form-control"
+              id="image" placeholder="Image" required>
+          </div>
+          <div class="row">
+            <!-- Trade Execution Time -->
+            <div class="col mb-3">
+              <label for="time" class="form-label text-start">Trade Execution
+                Time</label>
+              <input type="time" ngModel name="time" class="form-control"
+                id="time" placeholder="Trade Execution Time" required>
+            </div>
+            <!-- Trade Execution Date -->
+            <div class="col mb-3">
+              <label for="date" class="form-label text-start">Trade Execution
+                Date</label>
+              <input type="date" ngModel name="date" class="form-control"
+                id="date" placeholder="Trade Execution Date" required>
+            </div>
+          </div>
+          <!-- Trade Psychology -->
+          <div class="mb-3">
+            <label for="psychology" class="form-label text-start">Psychology</label>
+            <textarea type="text" ngModel name="psychology" class="form-control"
+              id="psychology" placeholder="Trade Psychology" required></textarea>
+          </div>
+          <!-- Trade Cost -->
+          <div class="row">
+            <div class="col mb-3">
+              <label for="tradeCost" class="form-label text-start">Trade Cost</label>
+              <input type="number" ngModel name="tradeCost" step="0.001"
+                class="form-control" id="tradeCost" placeholder="Trade Cost"
+                required>
+            </div>
+            <!-- Trade Exit -->
+            <div class="col mb-3">
+              <label for="exit" class="form-label text-start">Actual Exit</label>
+              <input type="number" ngModel name="exit" step="0.001"
+                class="form-control" id="exit" placeholder="Actual Exit">
+            </div>
+            <!-- Trade Duration -->
+            <div class="row">
+              <div class="col mb-3">
+                <label for="tradeDuration" class="form-label text-start">Trade
+                  Duration</label>
+                <input type="text" ngModel name="tradeDuration"
+                  class="form-control"
+                  id="tradeDuration" placeholder="Trade Duration">
+              </div>
+              <!-- Rating -->
+              <div class="col mb-3">
+                <label for="rating" class="form-label text-start">Rating out of
+                  5</label>
+                <input type="number" ngModel name="rating" class="form-control"
+                  id="rating" placeholder="Rating out of 5">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" #closeAddJournalButton
+            data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" type="submit"
+            [disabled]="addJournalForm.invalid">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
